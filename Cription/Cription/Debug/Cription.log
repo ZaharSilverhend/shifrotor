@@ -1,0 +1,8 @@
+﻿  main.cpp
+D:\prog\Cription\Cription\main.cpp(51,23): warning C4018: <: несоответствие типов со знаком и без знака
+D:\prog\Cription\Cription\main.cpp(58,23): warning C4018: <: несоответствие типов со знаком и без знака
+D:\prog\Cription\Cription\main.cpp(77,23): warning C4018: <: несоответствие типов со знаком и без знака
+D:\prog\Cription\Cription\main.cpp(106,26): warning C4018: <=: несоответствие типов со знаком и без знака
+D:\prog\Cription\Cription\main.cpp(123,23): warning C4018: <: несоответствие типов со знаком и без знака
+D:\prog\Cription\Cription\main.cpp(131,23): warning C4018: <: несоответствие типов со знаком и без знака
+  Cription.vcxproj -> D:\prog\Cription\Debug\Cription.exe
