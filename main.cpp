@@ -1,234 +1,317 @@
 #include <iostream>
-#include <string>
 #include <vector>
-#include <random>
-#include <bitset>
 #include <fstream>
-#include <cstring>
+#include <string>
 #include <windows.h>
-#include <shlobj.h>
-#include "fs_std.hpp"
-#include "filesystem.hpp"
-#include <codecvt> 
-#include <locale>
+#include <conio.h>
+#include <random>
 
 using namespace std;
 
-// Функция для копирования текста в буфер обмена
-int copyTextToClipboard(const std::string& text) {
-    std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
-    std::wstring wideText = converter.from_bytes(text);
+//Копирование ключа в буфер
+bool copyTextToClipboard(const vector<int>& key)
+{
+	string text;
+	for (int i = 0; i < key.size(); i++) {
+		text += to_string(key[i]) + ":";
+	}
 
-    if (!OpenClipboard(0)) {
-        return 011; // Ошибка открытия буфера обмена
-    }
+	if (!OpenClipboard(0)) 
+	{
+		//Если не удалось отрыть буфер обмена возвращается false
+		return false;
+	}
 
-    if (!EmptyClipboard()) {
-        CloseClipboard();
-        return 010; // Ошибка очистки буфера обмена
-    }
+	if (!EmptyClipboard()) 
+	{
+		CloseClipboard();
+		// Если не удалось очистить буфер обмена закрывается буфер обмена и возвращается false
+		return false;
+	}
 
-    HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, (wideText.size() + 1) * sizeof(wchar_t));
-    if (!hMem) {
-        CloseClipboard();
-        return 001; // Ошибка выделения памяти
-    }
+	HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, text.size() + 1);
+	if (!hMem) 
+	{
+		CloseClipboard();
+		//Если не удалось выделить памят закрывается буфер обмена и возвращается False
+		return false;
+	}
+	//Получение указателя на выделенную память
+	char* buffer = static_cast<char*>(GlobalLock(hMem));
+	//Копирование содержимого строки text в выделенную память
+	strcpy_s(buffer, text.size() + 1, text.c_str());
+	//Разблокировка памяти
+	GlobalUnlock(hMem);
 
-    wchar_t* buffer = static_cast<wchar_t*>(GlobalLock(hMem));
-    wcscpy_s(buffer, wideText.size() + 1, wideText.c_str());
-    GlobalUnlock(hMem);
+	if (!SetClipboardData(CF_TEXT, hMem)) 
+	{
+		CloseClipboard();
+		//Если не удалось установить данные в буфер обмена, закрывается буфер обмена и возвращается false
+		return false;
+	}
 
-    if (!SetClipboardData(CF_UNICODETEXT, hMem)) {
-        return 01; // Ошибка установки данных в буфер обмена
-    }
-
-    CloseClipboard();
-    return 0;
+	CloseClipboard();
+	return true;
 }
+//Обозреватель файлов
+string GetPathFile()
+{
+	std::string path;
+	// Объявление структуры для использования диалогового окна выбора файла
+	OPENFILENAMEA ofn;
+	// Объявление буфера для хранения имени файла
+	char szFileName[MAX_PATH] = "";
+	// Заполнение области памяти, связанной с структурой ofn, нулями
+	ZeroMemory(&ofn, sizeof(ofn));
+	// Установка размера структуры диалогового окна
+	ofn.lStructSize = sizeof(ofn);
+	// Установка родительского окна для диалогового окна как NULL
+	ofn.hwndOwner = NULL;
+	// Установка фильтра для выбора файлов
+	ofn.lpstrFilter = "All Files (*.*)\0*.*\0";
+	// Установка буфера для хранения имени выбранного файла
+	ofn.lpstrFile = szFileName;
+	// Установка максимальной длины имени файла
+	ofn.nMaxFile = sizeof(szFileName);
+	// Установка флага, требующего существования выбранного файла
+	ofn.Flags = OFN_FILEMUSTEXIST;
 
-// Процесс шифрования текста
-void encryption(string& txt, int& key) {
-    for (int i = 0; i < txt.length(); i++) {
-        txt[i] = char(int(txt[i] + key)); // Шифрование символов текста
-    }
+	if (GetOpenFileNameA(&ofn) == TRUE) {
+		path = ofn.lpstrFile;
+	}
+	else {
+		std::cout << "\n\t\x1b[91mОшибка:\x1b[0m Файл не выбран." << std::endl;
+	}
+	return path;
 }
+//Меню
+int Menu()
+{
+	int Nazhatai_Clavisha, user_command = 1;
+	system("cls");
+	std::cout << "\n\n\tВыберите действие:\n\n";
+	printf("\t\x1b[90m<\x1b[0mШифрование\x1b[90m>\x1b[0m");
+	std::cout << "\n\t\x1b[90m  Дешифрование\x1b[0m";
+	do
+	{
+		Nazhatai_Clavisha = _getch();
+		switch (Nazhatai_Clavisha)
+		{
+		case 119: // Код клавиши 'w'
+			if (user_command != 1)
+			{
+				user_command--;
+				printf("\x1b[H");
+				std::cout << "\n\n\tВыберите действие\n\n";
+				std::cout << "\t\x1b[90m<\x1b[0mШифрование\x1b[90m>\x1b[0m";
+				std::cout << "\n\t\x1b[90m  Дешифрование \x1b[0m";
+			}
+			break;
+		case 115: // Код клавиши 's'
+			if (user_command != 2)
+			{
+				user_command++;
+				printf("\x1b[H");
+				std::cout << "\n\n\tВыберите действие\n\n";
+				std::cout << "\t\x1b[90m  Шифрование \x1b[0m";
+				std::cout << "\n\t\x1b[90m<\x1b[0mДешифрование\x1b[90m>\x1b[0m";
+			}
+			break;
+		}
+	} while (Nazhatai_Clavisha != 13); // Код клавиши 'Enter'
 
-// Процесс перестановки битов в тексте
-void permutation_bits(string& txt) {
-    for (int i = 0; i < txt.length() - 1; i++) {
-        int ascii_value = static_cast<int>(txt[i]);
-        int ascii_value_2 = static_cast<int>(txt[i + 1]);
-        string binary_representation = bitset<8>(ascii_value).to_string();
-        string binary_representation_2 = bitset<8>(ascii_value_2).to_string();
-
-        for (int j = 4; j < 7; j++) {
-            swap(binary_representation[j], binary_representation_2[j]);
-        }
-
-        unsigned long decimalValue = bitset<8>(binary_representation).to_ulong();
-        unsigned long decimalValue2 = bitset<8>(binary_representation_2).to_ulong();
-        txt[i] = static_cast<char>(decimalValue);
-        txt[i + 1] = static_cast<char>(decimalValue2);
-    }
+	system("cls");
+	return user_command;
 }
+//Генерация ключа
+vector<int> generateKey()
+{
+	vector<int> key;
+	try
+	{
+		//Инициализация генератора случайных чисел
+		std::random_device rd;
+		//Инициализация генератора случайных чисел с использованием rd
+		std::mt19937 gen(rd());
 
-// Процесс дешифрования текста
-void decryption(string& txt, int& key) {
-    for (int i = 0; i < txt.length(); i++) {
-        txt[i] = char(int(txt[i] - key)); // Дешифрование символов текста
-    }
+		for (int i = 0; i < 10; ++i)
+		{
+			if (i % 2 == 0)
+			{
+				key.push_back(rd());
+			}
+			else
+			{
+				key.push_back(gen());
+			}
+		}
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << "\n\t\x1b[90mОшибка при генерации ключа:\x1b[0m " << e.what() << std::endl;
+		//Очищаю ключ в случае ошибки
+		key.clear();
+	}
+	return key;
 }
+//Шифрование и дешифровани
+string Encrypt(const string& text, const vector<int>& key)
+{
+	string EncryptedText = text;
+	cout << EncryptedText;
+	try
+	{
+		if (key.empty())
+		{
+			cerr << "\n\t\x1b[91mОшибка: \x1b[0m\x1b[90mКлюч пуст. Невозможно выполнить шифрование\x1b[0m\n";
+			exit(0);
+		}
 
-// Процесс обратной перестановки битов в тексте
-void permutation_bits_back(string& txt) {
-    for (int i = txt.length() - 1; i > 0; i--) {
-        int ascii_value = static_cast<int>(txt[i]);
-        int ascii_value_2 = static_cast<int>(txt[i - 1]);
-        string binary_representation = bitset<8>(ascii_value).to_string();
-        string binary_representation_2 = bitset<8>(ascii_value_2).to_string();
+		for (int i = 0; i < EncryptedText.length(); ++i)
+		{
+			EncryptedText[i] ^= key[i % key.size()];
+		}
 
-        for (int j = 4; j < 7; j++) {
-            swap(binary_representation[j], binary_representation_2[j]);
-        }
+		cout << "\n\t\x1b[90mШифрование успешно завершено!\x1b[0m\n";
 
-        unsigned long decimalValue = bitset<8>(binary_representation).to_ulong();
-        unsigned long decimalValue2 = bitset<8>(binary_representation_2).to_ulong();
-        txt[i] = static_cast<char>(decimalValue);
-        txt[i - 1] = static_cast<char>(decimalValue2);
-    }
+
+		return EncryptedText;
+	}
+	catch (const std::exception&)
+	{
+		cout << "\n\t\x1b[91mОшибка:\x1b[0m \x1b[90mШифрование не удалось\x1b[0m\n";
+		exit(0);
+	}
+
 }
+string Decrypt(const string& EncryptedText, const vector<int>& key)
+{
+	string DecryptedText = EncryptedText;
 
-// Создание пользовательского ключа
-string create_user_key(int& key, int& size_key) {
-    string str_key;
-    int rand_num;
+	try
+	{
+		if (key.empty())
+		{
+			cerr << "\n\t\x1b[91mОшибка:\x1b[0m \x1b[90mКлюч пуст\x1b[0m\n";
+			return "";
+		}
 
-    for (size_t i = 0; i <= size_key; i++) {
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::uniform_int_distribution<> dis(65, 90);
-        rand_num = dis(gen);
+		for (int i = 0; i < DecryptedText.length(); ++i)
+		{
+			DecryptedText[i] ^= key[i % key.size()];
+		}
 
-        str_key += char(rand_num);
-        key += rand_num;
-    }
-    return str_key;
+		cout << "\n\t\x1b[90mДешифрование успешно завершено\x1b[0m\n";
+		return DecryptedText;
+	}
+	catch (const std::exception&)
+	{
+		cout << "\n\t\x1b[91mОшибка:\x1b[0m \x1b[90mДешифрование не удалось\x1b[0m\n";
+		return ""; // Возвращаем пустую строку в случае ошибки
+	}
 }
-
-// Ввод ключа пользователем
-void deployment_key(int& key) {
-    string user_key;
-    cout << ">> Enter key:";
-    cin >> user_key;
-    for (int i = 0; i < user_key.length() - 1; i++) {
-        key += int(user_key[i]);
-    }
+//Обработка ключа пользователя
+vector<int> GetUserKey()
+{
+	vector<int> key;
+	string input;
+	string str;
+	cout << "\n\t\x1b[90mВведите ключ:\x1b[0m ";
+	cin >> input;
+	try
+	{
+		for (int i = 0; i < input.length(); i++)
+		{
+			if (input[i] == ':')
+			{
+				key.push_back(stoi(str));
+				str = "";
+			}
+			else
+			{
+				str += input[i];
+			}
+		}
+		return key;
+	}
+	catch (const std::exception&)
+	{
+		cout << "\n\t\x1b[91mОшибка:\x1b[0m \x1b[90mНеправильно введен ключ\x1b[0m";
+		exit(0);
+	}
 }
-
-// Очистка пути от лишних символов
-void clear_path(string& pathf) {
-    string clearW;
-    for (int i = 0; i < pathf.length(); i++) {
-        if (char(pathf[i]) != '"') {
-            clearW = clearW + pathf[i];
-            if (pathf[i] == '\\')
-                clearW = clearW + '\\';
-        }
-    }
-    pathf = clearW;
-    cout << pathf << endl;
+//Вывод ключа
+void DisplayKey(vector<int> key)
+{
+	std::cout << "\n\t\x1b[90mКлюч <\x1b[0m";
+	for (size_t i = 0; i < key.size(); i++)
+	{
+		if (i != (key.size() - 1))
+		{
+			cout << key[i] << ":";
+		}
+		else
+		{
+			cout << key[i];
+		}
+	}
+	std::cout << "\x1b[90m>\x1b[0m";
 }
+//Основная логика
+void ProcessFileWithEncryption(const string& path, const vector<int>& key, int user_command)
+{
+	ifstream read_file;
+	ofstream write_file;
 
-int main() {
-    setlocale(LC_ALL, "rus");
+	string Text;
 
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<> dis(10, 90);
-    int size_key = dis(gen);
+	read_file.open(path);
+	if (!read_file.is_open())
+	{
+		cout << "\t\x1b[91mОшибка:\x1b[0m \x1b[90mневозможно открыть файл...\x1b[0m";
+		exit(0);
+	}
+	else
+	{
+		getline(read_file, Text, '\0');
+	}
+	read_file.close();
 
-    int user_command, key;
-    cout << "#1 шифрование\n";
-    cout << "#2 дешифрование\n";
-    cout << "<< Введите номер команды: ";
-    cin >> user_command;
+	if (user_command == 1)
+	{
+		// Шифрование текста
+		Text = Encrypt(Text, key);
+		DisplayKey(key);
+		if (copyTextToClipboard(key))
+		{
+			std::cout << "\n\n\t\x1b[90mКлюч скопирован\x1b[0m\n\n\n";
+		}
+		else
+		{
+			std::cout << "\n\n\tКлюч \x1b[90mНЕ\x1b[0m скопирован\x1b[90m...\x1b[0m\n\n\n\n";
+		}
+	}
+	else if (user_command == 2) {
+		// Дешифрование текста с использованием предоставленного ключа для дешифрования
+		Text = Decrypt(Text, GetUserKey());
+	}
+	write_file.open(path);
+	if (!write_file.is_open()) {
+		cout << "\t\n\x1b[91mОшибка записи в файл...\x1b[0m";
+		exit(0);
+	}
+	else {
+		write_file << Text;
+	}
+	write_file.close();
+}
+//Основ вызов функций
+int main()
+{
+	setlocale(LC_ALL, "rus");
+	vector<int> key = generateKey();
+	int UserCommand = Menu();
+	ProcessFileWithEncryption(GetPathFile(), key, UserCommand);
 
-    system("cls");
-
-    wchar_t path[MAX_PATH] = L"";
-
-    OPENFILENAME ofn;
-    ZeroMemory(&ofn, sizeof(ofn));
-    ofn.lStructSize = sizeof(ofn);
-    ofn.hwndOwner = NULL;
-    ofn.lpstrFile = path;
-    ofn.nMaxFile = MAX_PATH;
-    ofn.lpstrFilter = L"All Files\0*.*\0";
-    ofn.nFilterIndex = 1;
-    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-
-    if (GetOpenFileName(&ofn) == TRUE) {
-        wcout << L"<< Выбранный файл: " << path << std::endl;
-
-        ifstream read_file;
-        ofstream writh_file;
-
-        switch (user_command) {
-        case 1: {
-            string txt;
-            read_file.open(path);
-            if (!read_file.is_open()) {
-                cout << "<< Ошибка при открытии файла...";
-            }
-            else {
-                getline(read_file, txt, '\0');
-            }
-            read_file.close();
-            string user_key = create_user_key(key, size_key);
-            encryption(txt, key);
-            permutation_bits(txt);
-            writh_file.open(path);
-            if (!writh_file.is_open()) {
-                cout << "<< Ошибка при записи в файл...";
-            }
-            else {
-                writh_file << txt;
-            }
-            writh_file.close();
-            copyTextToClipboard(user_key);
-            std::cout << "<< Ключ успешно скопирован в буфер обмена!!!" << std::endl;
-            cout << ">> Ключ:" << user_key;
-        }
-              break;
-        case 2: {
-            string txt;
-            read_file.open(path);
-            if (!read_file.is_open()) {
-                cout << "<< Ошибка при открытии файла...";
-            }
-            else {
-                getline(read_file, txt, '\0');
-            }
-            read_file.close();
-            deployment_key(key);
-            permutation_bits_back(txt);
-            decryption(txt, key);
-            writh_file.open(path);
-            if (!writh_file.is_open()) {
-                cout << "<< Ошибка при записи в файл...";
-            }
-            else {
-                writh_file << txt;
-            }
-            writh_file.close();
-        }
-              break;
-        default:
-            break;
-        }
-    }
-    else {
-        std::cout << "<< Невозможно открыть файл!!!" << std::endl;
-    }
-    return 0;
+	return 0;
 }
